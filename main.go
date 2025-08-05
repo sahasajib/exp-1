@@ -1,17 +1,38 @@
 package main
 
 import (
+	//"database/sql"
 	"encoding/json"
 	"fmt"
+	//"log"
 	"log/slog"
 	"net/http"
 	"strconv"
-	"github.com/gorilla/mux"
+
+	//"github.com/gorilla/mux"
 	"github.com/sahasajib/exp-1/types"
 )
 
 
 var students[] types.Student
+
+// var db *sql.DB
+
+// func initDB(){
+// 	var err error
+// 	connStr := "host=localhost port=5432 user=postgre password=12345678 dbname=mydb sslmode=disable"
+
+// 	db, err = sql.Open("postgres", connStr)
+// 	if err != nil{
+// 		log.Fatal("Failed to connect to database", "error", err)
+// 	}
+// 	err = db.Ping()
+// 	if err != nil {
+// 		log.Fatal("Failed to ping database", "error", err)
+// 	}
+// 	slog.Info("Connected to database successfully")
+// 	// Initialize students slice with some data
+// }
 
 func handleCors(w http.ResponseWriter){
 	w.Header().Set("Access-Control-Allow-Origin", "*")
@@ -74,8 +95,7 @@ func deleteStudent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 		// Get ID from path param
-	params := mux.Vars(r)
-	idStr := params["id"]
+	idStr := r.URL.Query().Get("id")
 
 	id, err := strconv.ParseInt(idStr, 10, 64)
 	if err != nil {
@@ -94,11 +114,39 @@ func deleteStudent(w http.ResponseWriter, r *http.Request) {
 	http.Error(w, "Student not found", http.StatusNotFound)
 }
 
+func updateStudent(w http.ResponseWriter, r *http.Request) {
+	handleCors(w)
+	handleOptions(w, r)
+	if r.Method != http.MethodPut {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var studentUp types.Student
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&studentUp)
+	if err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	for i, s := range students {
+		if s.ID == studentUp.ID {
+			students[i] = studentUp
+			slog.Info("Student updated", "id", studentUp.ID)
+			sendData(w, studentUp, http.StatusOK)
+			return
+		}
+	}
+	http.Error(w, "Student not found", http.StatusNotFound)
+}
+
 func main() {
 	router := http.NewServeMux()
 	router.HandleFunc("/student", getStudent)
 	router.HandleFunc("/student/create", createStudent)
-	router.HandleFunc("/student/{id}", deleteStudent)
+	router.HandleFunc("/student/delete", deleteStudent)
+	router.HandleFunc("/student/update", updateStudent)
 
 	slog.Info("Server is running on port 8082")
 	if err := http.ListenAndServe(":8082", router); err != nil {
