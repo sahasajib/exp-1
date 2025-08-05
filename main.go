@@ -4,9 +4,9 @@ import (
 	"encoding/json"
 	"log/slog"
 	"net/http"
-
-	"github.com/gorilla/mux/Desktop/go/exp-1/types"
+	"github.com/sahasajib/exp-1/types"
 )
+
 
 var students[] types.Student
 
@@ -52,7 +52,7 @@ func createStudent(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var student types.Type
+	var student types.Student
 	decoder := json.NewDecoder(r.Body)
 	err := decoder.Decode(&student)
 	if err != nil {
@@ -76,21 +76,3 @@ func main() {
 	}
 }
 
-func init(){
-	stu1 := types.Student{
-		Name:  "abc",
-		Phone: "01700000000",
-		Email: "abc@gmail.com",
-		Age:   25,
-	}
-
-	stu2 := types.Student{
-		Name:  "xyz",
-		Phone: "01800000000",
-		Email: "xyz@gmail.com",
-		Age:   30,
-	}
-
-	students = append(students, stu1)
-	students = append(students, stu2)
-}
